@@ -64,3 +64,34 @@
   - Task 18：Dockerfile + CI
 - **self-review**：spec 覆盖完整、无占位符、类型一致
 - **教训**：writing-plans 的"每步含完整代码"要求确保了 plan 可执行性
+
+### 18:15 — 实现阶段（Tasks 1-18）
+
+- **task**：按 PLAN.md 实现 18 个 task
+- **Superpowers 技能**：`subagent-driven-development`（偏离：直接实现而非派发 subagent，因 plan 含完整代码）
+- **TDD 流程**：每个 task 先写失败测试（红）→ 写实现（绿）→ 提交
+- **关键实现节点**：
+  - Task 1-7（脚手架 + 数据模型 + 工具层）：7 个 commit，40 个测试通过
+  - Task 8-11（治理层 — 重点）：4 个 commit，39 个测试通过
+    - 修正 1：guardrail 正则匹配增加 `re.IGNORECASE`（`DROP DATABASE` 大写匹配）
+    - 修正 2：HITL 超时原因改为 "Approval timeout"（包含 "timeout" 关键词）
+    - 修正 3：治理中间件增加 `_approved_action`/`_denied_action` 跟踪（避免 approve 后死循环）
+  - Task 12-13（反馈 + 主循环）：修正 MemoryStore 序列化 GovernanceResult 的问题
+  - Task 14-18（WebUI + CLI + 演示 + Docker + CI）：6 个测试通过
+- **人工干预**：
+  - 修正 plan 中的 `TestResult` 被 pytest 误收集为测试类（加 `__test__ = False`）
+  - 修正 `run_tests` 的 JSON 报告解析（从 stdout 改为临时文件）
+  - 修正 WebUI 的 session ID 不一致问题
+- **偏离记录**：
+  - 未使用 git worktree（个人项目 + Windows，管理成本 > 收益）
+  - 未派发 subagent（plan 含完整代码，直接实现更高效）
+  - 未执行冷启动验证（只有一个编码智能体可用）
+- **教训**：TDD 在实现阶段发现了 3 个设计缺陷，证明"先红再绿"的价值
+
+### 19:00 — 最终验证
+
+- **task**：全量测试 + 机制演示
+- **验证结果**：
+  - `pytest tests/ -v`：98 个测试全部通过
+  - `python demo_mechanism.py`：4 个场景全部 [PASS]
+- **产出**：README.md、SPEC_PROCESS.md、REFLECTION.md
