@@ -39,8 +39,28 @@
   - 修复：在 §3.1.2 补充 MockLLMClient 实现类描述
 - **教训**：spec self-review 环节发现了 2 个实质性问题，证明其价值
 
-### 17:45 — 等待用户 review SPEC
+### 17:45 — 用户确认 SPEC
 
 - **task**：用户 review SPEC
 - **Superpowers 技能**：`brainstorming`（用户 review gate）
-- **状态**：等待用户确认 SPEC.md
+- **状态**：用户确认 SPEC.md，开始写 PLAN
+
+### 18:00 — PLAN 文档完成
+
+- **task**：PLAN.md 编写
+- **Superpowers 技能**：`writing-plans`
+- **产出**：
+  - `docs/superpowers/plans/2026-07-07-coding-agent-harness.md`
+  - `PLAN.md`（根目录交付版）
+- **计划内容**：18 个 task，每个 task 包含 TDD 步骤（红→绿→重构）
+  - Task 1-5：脚手架 + Action + Config + LLM + Credentials + Memory
+  - Task 6-7：工具层（file/shell/test + dispatcher）
+  - Task 8-11：治理层（guardrail + sandbox + hitl + middleware）— 重点维度
+  - Task 12：反馈闭环（validator + classifier）
+  - Task 13：Agent 主循环
+  - Task 14-15：WebUI 后端 + 前端
+  - Task 16：CLI + config.yaml
+  - Task 17：机制演示
+  - Task 18：Dockerfile + CI
+- **self-review**：spec 覆盖完整、无占位符、类型一致
+- **教训**：writing-plans 的"每步含完整代码"要求确保了 plan 可执行性
