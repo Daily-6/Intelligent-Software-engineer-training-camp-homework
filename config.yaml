@@ -1,0 +1,33 @@
+project_root: "./workspace"
+llm:
+  provider: "deepseek"
+  model: "deepseek-chat"
+  max_tokens: 4096
+  temperature: 0.7
+governance:
+  deny_patterns:
+    - 'rm\s+-rf\s+/'
+    - 'drop\s+database'
+    - 'curl.*\|\s*sh'
+    - 'chmod\s+777'
+    - 'mkfs'
+    - 'dd\s+if='
+  approval_patterns:
+    - 'git\s+push'
+    - 'pip\s+install'
+    - 'npm\s+publish'
+    - 'docker\s+push'
+  readonly_paths:
+    - ".git/"
+    - "README.md"
+sandbox:
+  command_policy: "blacklist"
+  blocked_commands:
+    - "sudo"
+    - "shutdown"
+    - "reboot"
+    - "systemctl"
+feedback:
+  test_command: "pytest"
+  max_retries: 3
+max_turns: 20

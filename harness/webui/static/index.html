@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coding Agent Harness</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: #d4d4d4; display: flex; height: 100vh; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #333; }
+        .chat-header { padding: 12px 20px; background: #252526; border-bottom: 1px solid #333; font-size: 16px; font-weight: bold; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; }
+        .msg { margin-bottom: 12px; padding: 8px 12px; border-radius: 6px; max-width: 80%; }
+        .msg.user { background: #2d4a5e; margin-left: auto; }
+        .msg.agent { background: #2d2d30; }
+        .msg.tool { background: #1a3a1a; font-family: monospace; font-size: 13px; }
+        .msg.blocked { background: #4a2d2d; border-left: 3px solid #f44; }
+        .chat-input { padding: 12px 16px; background: #252526; border-top: 1px solid #333; display: flex; gap: 8px; }
+        .chat-input input { flex: 1; padding: 8px 12px; background: #3c3c3c; border: 1px solid #555; border-radius: 4px; color: #d4d4d4; font-size: 14px; }
+        .chat-input button { padding: 8px 16px; background: #0e639c; border: none; border-radius: 4px; color: #fff; cursor: pointer; font-size: 14px; }
+        .chat-input button:hover { background: #1177bb; }
+        .sidebar { width: 300px; background: #252526; padding: 16px; overflow-y: auto; }
+        .sidebar h2 { font-size: 14px; margin-bottom: 12px; color: #888; text-transform: uppercase; }
+        .session-item { padding: 8px 12px; background: #2d2d30; border-radius: 4px; margin-bottom: 6px; cursor: pointer; font-size: 13px; }
+        .session-item:hover { background: #37373d; }
+        .session-item.active { border-left: 3px solid #0e639c; }
+        .hitl-panel { margin-top: 20px; padding: 12px; background: #4a2d2d; border-radius: 6px; border: 1px solid #f44; }
+        .hitl-panel h3 { color: #f88; font-size: 14px; margin-bottom: 8px; }
+        .hitl-panel p { font-size: 13px; margin-bottom: 8px; }
+        .hitl-panel button { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px; font-size: 13px; }
+        .hitl-panel .approve { background: #2d5a2d; color: #fff; }
+        .hitl-panel .deny { background: #5a2d2d; color: #fff; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px; }
+        .status-running { background: #4a4a0e; color: #ffcc00; }
+        .status-completed { background: #2d5a2d; color: #6f6; }
+        .status-stopped { background: #5a2d2d; color: #f66; }
+    </style>
+</head>
+<body>
+    <div class="chat-area">
+        <div class="chat-header">Coding Agent Harness</div>
+        <div class="chat-messages" id="messages"></div>
+        <div class="chat-input">
+            <input type="text" id="taskInput" placeholder="输入编码任务..." onkeypress="if(event.key==='Enter')submitTask()">
+            <button onclick="submitTask()">发送</button>
+        </div>
+    </div>
+    <div class="sidebar">
+        <h2>会话列表</h2>
+        <div id="sessionList"></div>
+        <div id="hitlPanel" style="display:none;" class="hitl-panel">
+            <h3>⚠ 危险动作审批</h3>
+            <p id="hitlAction"></p>
+            <button class="approve" onclick="approveAction()">批准</button>
+            <button class="deny" onclick="denyAction()">拒绝</button>
+        </div>
+    </div>
+    <script>
+        let currentSession = null;
+        let ws = null;
+
+        async function submitTask() {
+            const input = document.getElementById('taskInput');
+            const task = input.value.trim();
+            if (!task) return;
+            input.value = '';
+            addMessage('user', task);
+            const resp = await fetch('/api/sessions', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({task: task})
+            });
+            const data = await resp.json();
+            currentSession = data.id;
+            addSessionToList(data.id, task);
+            connectWS(data.id);
+            pollSession(data.id);
+        }
+
+        function addMessage(role, text) {
+            const div = document.getElementById('messages');
+            const msg = document.createElement('div');
+            msg.className = 'msg ' + role;
+            msg.textContent = text;
+            div.appendChild(msg);
+            div.scrollTop = div.scrollHeight;
+        }
+
+        function addSessionToList(id, task) {
+            const list = document.getElementById('sessionList');
+            const item = document.createElement('div');
+            item.className = 'session-item active';
+            item.textContent = task.substring(0, 30) + '...';
+            item.onclick = () => selectSession(id);
+            list.appendChild(item);
+        }
+
+        function connectWS(sid) {
+            if (ws) ws.close();
+            ws = new WebSocket(`ws://${location.host}/ws/sessions/${sid}`);
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.status === 'pending_approval' || data.turns_count > 0) {
+                    checkHITL(sid);
+                }
+            };
+        }
+
+        async function pollSession(sid) {
+            const interval = setInterval(async () => {
+                const resp = await fetch(`/api/sessions/${sid}`);
+                const data = await resp.json();
+                if (data.turns && data.turns.length > 0) {
+                    const messages = document.getElementById('messages');
+                    const existing = messages.children.length;
+                    for (let i = existing; i < data.turns.length; i++) {
+                        const t = data.turns[i];
+                        addMessage('agent', `[${t.action.tool_name}] ${t.action.thought}`);
+                        if (t.governance && t.governance.blocked) {
+                            addMessage('blocked', `BLOCKED: ${t.governance.reason}`);
+                        }
+                    }
+                }
+                if (data.status !== 'running') {
+                    clearInterval(interval);
+                    addMessage('agent', `Session ${data.status}`);
+                }
+                checkHITL(sid);
+            }, 1000);
+        }
+
+        async function checkHITL(sid) {
+            try {
+                const resp = await fetch(`/api/sessions/${sid}`);
+                const data = await resp.json();
+                const panel = document.getElementById('hitlPanel');
+                if (data.status === 'running' && data.turns) {
+                    const lastTurn = data.turns[data.turns.length - 1];
+                    if (lastTurn && lastTurn.governance && lastTurn.governance.blocked && lastTurn.governance.reason.includes('Pending')) {
+                        panel.style.display = 'block';
+                        document.getElementById('hitlAction').textContent = `${lastTurn.action.tool_name}: ${JSON.stringify(lastTurn.action.args)}`;
+                        return;
+                    }
+                }
+                panel.style.display = 'none';
+            } catch(e) {}
+        }
+
+        async function approveAction() {
+            if (!currentSession) return;
+            await fetch(`/api/sessions/${currentSession}/approve`, {method: 'POST'});
+            document.getElementById('hitlPanel').style.display = 'none';
+        }
+
+        async function denyAction() {
+            if (!currentSession) return;
+            await fetch(`/api/sessions/${currentSession}/deny`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({reason: 'User denied'})
+            });
+            document.getElementById('hitlPanel').style.display = 'none';
+        }
+
+        function selectSession(sid) {
+            currentSession = sid;
+            document.getElementById('messages').innerHTML = '';
+            pollSession(sid);
+            connectWS(sid);
+        }
+    </script>
+</body>
+</html>
