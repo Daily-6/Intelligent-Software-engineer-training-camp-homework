@@ -85,12 +85,23 @@ def create_app(config: Config = None) -> FastAPI:
     async def create_session(req: TaskRequest):
         sid = str(uuid.uuid4())[:8]
         loop = _create_loop(config)
+        from harness.core.action import Session
+        from datetime import datetime
+        session = Session(id=sid, task=req.task, turns=[], status="running", created_at=datetime.now().isoformat())
         with _lock:
-            _sessions[sid] = {"loop": loop, "session": None, "status": "running"}
+            _sessions[sid] = {"loop": loop, "session": session, "status": "running"}
         def run_task():
-            session = loop.run(req.task)
+            try:
+                loop.run(req.task, session=session)
+            except Exception as e:
+                session.status = "error"
+                from harness.core.action import Action, Turn, ToolResult
+                session.turns.append(Turn(
+                    action=Action(tool_name="error", args={}, thought=str(e), result=ToolResult(success=False, output="", error=str(e))),
+                    governance_result=None,
+                    timestamp=datetime.now().isoformat(),
+                ))
             with _lock:
-                _sessions[sid]["session"] = session
                 _sessions[sid]["status"] = session.status
         t = threading.Thread(target=run_task, daemon=True)
         t.start()

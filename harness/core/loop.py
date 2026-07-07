@@ -17,15 +17,16 @@ class AgentLoop:
         self._config = config
         self._stopped = False
 
-    def run(self, task: str) -> Session:
-        session_id = str(uuid.uuid4())[:8]
-        session = Session(
-            id=session_id,
-            task=task,
-            turns=[],
-            status="running",
-            created_at=datetime.now().isoformat(),
-        )
+    def run(self, task: str, session: Session = None) -> Session:
+        if session is None:
+            session_id = str(uuid.uuid4())[:8]
+            session = Session(
+                id=session_id,
+                task=task,
+                turns=[],
+                status="running",
+                created_at=datetime.now().isoformat(),
+            )
         messages = [
             Message(role="system", content=self._system_prompt()),
             Message(role="user", content=task),
