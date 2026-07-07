@@ -1,4 +1,5 @@
 import uuid
+import json
 from datetime import datetime
 from harness.core.action import Action, Message, Turn, Session, ToolResult
 from harness.core.llm import LLMClient
@@ -46,7 +47,7 @@ class AgentLoop:
             session.turns.append(turn)
             self._memory.append_history(turn)
             if gov_result.blocked:
-                messages.append(Message(role="assistant", content=f"Action: {action.tool_name}({action.args}) - {action.thought}"))
+                messages.append(Message(role="assistant", content=json.dumps({"tool": action.tool_name, "args": action.args, "thought": action.thought})))
                 messages.append(Message(role="tool", content=f"BLOCKED: {gov_result.reason}"))
                 turn_count += 1
                 continue
@@ -56,8 +57,8 @@ class AgentLoop:
                 break
             result = self._dispatcher.execute(action, context={"root": self._config.project_root})
             action.result = result
-            messages.append(Message(role="assistant", content=f"Action: {action.tool_name}({action.args}) - {action.thought}"))
-            messages.append(Message(role="tool", content=f"Result: success={result.success}, output={result.output}, error={result.error}"))
+            messages.append(Message(role="assistant", content=json.dumps({"tool": action.tool_name, "args": action.args, "thought": action.thought})))
+            messages.append(Message(role="tool", content=f"success={result.success}, output={result.output[:500]}, error={result.error[:500]}"))
             turn_count += 1
         if session.status == "running":
             session.status = "stopped"

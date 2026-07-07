@@ -62,7 +62,25 @@ class DeepSeekClient(LLMClient):
             thought = data.get("thought") or data.get("reasoning") or data.get("reason") or ""
             return Action(tool_name=tool, args=args, thought=thought)
         except Exception as e:
-            return Action(tool_name="error", args={}, thought=f"parse error: {e}, raw: {content[:200]}")
+            return self._parse_action_fallback(content)
+
+    def _parse_action_fallback(self, content: str) -> Action:
+        import re
+        m = re.match(r'Action:\s*(\w+)\s*\((.*)\)\s*-?\s*(.*)', content, re.DOTALL)
+        if m:
+            tool_name = m.group(1)
+            args_str = m.group(2)
+            thought = m.group(3).strip()
+            try:
+                args = eval("(" + args_str + ")")
+                if isinstance(args, tuple) and len(args) == 1:
+                    args = args[0]
+                if not isinstance(args, dict):
+                    args = {"value": str(args)}
+            except Exception:
+                args = {"raw": args_str}
+            return Action(tool_name=tool_name, args=args, thought=thought)
+        return Action(tool_name="error", args={}, thought=f"unparseable: {content[:200]}")
 
 
 class MockLLMClient(LLMClient):
