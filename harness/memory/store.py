@@ -38,7 +38,7 @@ class MemoryStore:
             "conventions": self._data["conventions"],
             "history": [
                 {"action": {"tool_name": t.action.tool_name, "args": t.action.args, "thought": t.action.thought},
-                 "governance_result": t.governance_result,
+                 "governance_result": {"blocked": t.governance_result.blocked, "reason": t.governance_result.reason} if t.governance_result and hasattr(t.governance_result, 'blocked') else None,
                  "timestamp": t.timestamp}
                 for t in self._data["history"]
             ],
