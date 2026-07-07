@@ -36,7 +36,8 @@ def _create_loop(config: Config) -> AgentLoop:
 
     api_key = os.environ.get("DEEPSEEK_API_KEY")
     if api_key:
-        llm = DeepSeekClient(api_key=api_key, model=config.llm.model)
+        model = os.environ.get("DEEPSEEK_MODEL", config.llm.model)
+        llm = DeepSeekClient(api_key=api_key, model=model)
     else:
         script = [Action(tool_name="finish", args={}, thought="DEEPSEEK_API_KEY not set, finishing immediately")]
         llm = MockLLMClient(script)
