@@ -62,6 +62,14 @@ def create_app(config: Config = None) -> FastAPI:
         config = Config.default()
     app = FastAPI(title="Coding Agent Harness")
 
+    from fastapi.middleware.cors import CORSMiddleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
