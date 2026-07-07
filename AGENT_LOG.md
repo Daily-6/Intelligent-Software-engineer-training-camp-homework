@@ -85,7 +85,7 @@
 - **偏离记录**：
   - 未使用 git worktree（个人项目 + Windows，管理成本 > 收益）
   - 未派发 subagent（plan 含完整代码，直接实现更高效）
-  - 未执行冷启动验证（只有一个编码智能体可用）
+  - 冷启动验证延迟执行：初期只有一个编码智能体，收尾阶段用 ChatGPT 补做，暴露 3 个真实 spec 缺陷（详见 SPEC_PROCESS.md §5）
   - 未使用 PR 工作流（个人项目，直接在 main 分支提交，commit 历史完整可追溯）
   - 未执行两阶段评审（§4.6.4）：每个 task 完成后未做"spec 合规检查 → 代码质量检查"的独立评审环节。替代措施：TDD 红绿循环提供了功能正确性的客观验证，spec 合规通过 PLAN.md self-review 保障，代码质量通过 98 个测试覆盖。偏离原因：单人项目无独立 reviewer，两阶段评审的收益不足以覆盖其协调成本。
   - commit message 未标注 subagent（因直接实现，未派发 subagent）
@@ -161,4 +161,4 @@
   - 全部交付物已提交：SPEC.md、PLAN.md、SPEC_PROCESS.md、README.md、AGENT_LOG.md、REFLECTION.md、Dockerfile、.gitlab-ci.yml、.github/workflows/ci.yml、render.yaml
 - **待办**：
   - 用户需在 HF Space Settings 设置 DEEPSEEK_API_KEY 才能让 agent 真正工作
-  - 冷启动验证（§4.5）仍未执行（环境限制）
+  - 冷启动验证（§4.5）已用 ChatGPT 补做，详见 SPEC_PROCESS.md §5
