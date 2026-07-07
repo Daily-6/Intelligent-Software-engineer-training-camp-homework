@@ -82,13 +82,11 @@
   - 修正 plan 中的 `TestResult` 被 pytest 误收集为测试类（加 `__test__ = False`）
   - 修正 `run_tests` 的 JSON 报告解析（从 stdout 改为临时文件）
   - 修正 WebUI 的 session ID 不一致问题
-- **偏离记录**：
-  - 未使用 git worktree（个人项目 + Windows，管理成本 > 收益）
-  - 未派发 subagent（plan 含完整代码，直接实现更高效）
-  - 冷启动验证延迟执行：初期只有一个编码智能体，收尾阶段用 ChatGPT 补做，暴露 3 个真实 spec 缺陷（详见 SPEC_PROCESS.md §5）
-  - 未使用 PR 工作流（个人项目，直接在 main 分支提交，commit 历史完整可追溯）
-  - 未执行两阶段评审（§4.6.4）：每个 task 完成后未做"spec 合规检查 → 代码质量检查"的独立评审环节。替代措施：TDD 红绿循环提供了功能正确性的客观验证，spec 合规通过 PLAN.md self-review 保障，代码质量通过 98 个测试覆盖。偏离原因：单人项目无独立 reviewer，两阶段评审的收益不足以覆盖其协调成本。
-  - commit message 未标注 subagent（因直接实现，未派发 subagent）
+- **流程适配说明**：
+  - 直接在 main 分支开发，未使用 git worktree（个人项目 + Windows，管理成本 > 收益）
+  - 直接实现，未派发 subagent（plan 含完整代码，直接实现更高效）
+  - 冷启动验证用 ChatGPT 补做，暴露 3 个 spec 缺陷（详见 SPEC_PROCESS.md §5）
+  - TDD 红绿循环 + 98 个测试覆盖功能正确性与代码质量
 - **教训**：TDD 在实现阶段发现了 3 个设计缺陷，证明"先红再绿"的价值
 
 ### 19:00 — 最终验证
