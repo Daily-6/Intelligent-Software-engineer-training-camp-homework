@@ -108,3 +108,57 @@
   3. AGENT_LOG 偏离记录：补充两阶段评审未执行、PR 工作流未使用、commit 未标注 subagent 的记录与原因
 - **待用户操作**：在 Render 上创建账号并部署（render.yaml 已就绪）
 - **教训**：需求对照应在实现前做，而非实现后——线上部署是硬性要求，应更早规划
+
+### 20:00 — Hugging Face 部署
+
+- **task**：部署 WebUI 到 Hugging Face Spaces
+- **Superpowers 技能**：无（部署操作）
+- **关键操作**：
+  - 创建 HF Space：`https://huggingface.co/spaces/Daily6/intelligent-software`
+  - Dockerfile 改用端口 7860（HF 标准）
+  - README.md 添加 HF Spaces front matter 元数据
+  - 通过代理 `http://127.0.0.1:7897` 推送代码到 HF（huggingface.co 被墙）
+  - 使用 HF token 认证推送
+- **公网 URL**：`https://daily6-intelligent-software.hf.space`
+- **人工干预**：用户手动创建 HF Space、设置 Repository secrets（DEEPSEEK_API_KEY）
+- **教训**：国内网络环境下 Hugging Face 需要代理，应提前检测网络连通性
+
+### 20:30 — WebUI 前端修复
+
+- **task**：修复 WebUI 前端无反应的问题
+- **问题诊断**：
+  1. WebSocket 用 `ws://` 但 HF Spaces 是 HTTPS 需 `wss://`
+  2. 消息计数逻辑错误：用 DOM 子元素数量对比 turns 数量，但 DOM 包含用户消息导致偏移
+  3. 无错误处理：fetch 失败时静默无反应
+- **修复**：
+  - 重写前端：去掉 WebSocket，改用纯轮询（更可靠）
+  - 用 `displayedTurns` 独立追踪已显示的 turn 数
+  - 所有 fetch 调用加 try/catch，失败时显示错误消息
+  - 添加 CORS 中间件
+- **commit**：`cf9529c`、`32f3808`
+- **教训**：前端在 HTTPS 环境下的 WebSocket 协议、跨域、错误处理需提前考虑
+
+### 21:00 — 实时 turns 显示修复
+
+- **task**：修复 agent 运行中但前端看不到中间结果
+- **问题诊断**：session 对象在线程结束后才写入 `_sessions[sid]["session"]`，前端轮询时 turns 永远为空
+- **修复**：
+  - `AgentLoop.run()` 接受可选的预创建 Session 参数
+  - WebUI 在线程启动前创建 Session 对象并共享给 loop
+  - turns 实时 append 到共享 session，前端轮询立即可见
+  - 添加线程异常处理：出错时 session.status 设为 "error"
+- **commit**：`bf140bc`
+- **教训**：多线程共享状态需在启动前初始化，不能在完成后才写入
+
+### 21:30 — 保存工作进度
+
+- **task**：保存所有工作进度
+- **当前状态**：
+  - 18/18 task 完成，98 个单测通过，4 个机制演示通过
+  - CI（GitHub Actions）pass
+  - HF Space 部署成功：`https://daily6-intelligent-software.hf.space`
+  - GitHub 仓库：`https://github.com/Daily-6/Intelligent-Software-engineer-training-camp-homework`
+  - 全部交付物已提交：SPEC.md、PLAN.md、SPEC_PROCESS.md、README.md、AGENT_LOG.md、REFLECTION.md、Dockerfile、.gitlab-ci.yml、.github/workflows/ci.yml、render.yaml
+- **待办**：
+  - 用户需在 HF Space Settings 设置 DEEPSEEK_API_KEY 才能让 agent 真正工作
+  - 冷启动验证（§4.5）仍未执行（环境限制）

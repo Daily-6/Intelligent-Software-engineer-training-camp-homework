@@ -11,9 +11,12 @@ class LLMClient(ABC):
 
 
 class DeepSeekClient(LLMClient):
-    def __init__(self, api_key: str, model: str = "deepseek-chat", max_tokens: int = 4096, temperature: float = 0.7):
+    def __init__(self, api_key: str, model: str = "deepseek-chat", max_tokens: int = 4096, temperature: float = 0.7, base_url: str = None):
         from openai import OpenAI
-        self.client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        import os
+        if base_url is None:
+            base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
         self.max_tokens = max_tokens
         self.temperature = temperature
