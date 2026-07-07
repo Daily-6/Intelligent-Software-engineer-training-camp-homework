@@ -1,3 +1,13 @@
+---
+title: Coding Agent Harness
+emoji: 🤖
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Coding Agent Harness
 
 > AI4SE 期末项目 · A · Coding Agent Harness
@@ -191,9 +201,11 @@ CI 状态：最后一次执行为 **pass** ✅
 
 ### 公网访问地址
 
-**https://coding-agent-harness.onrender.com**
+**https://daily-6-coding-agent-harness.hf.space**
 
-> 注：Render 免费层在 15 分钟无请求后会休眠，首次访问可能需要 30 秒冷启动。
+> 部署平台：Hugging Face Spaces（Docker SDK，免费）
+> 部署方式：将代码推送到 HF Space 的 git 仓库，自动构建 Docker 镜像并部署
+> 环境变量：`DEEPSEEK_API_KEY` 在 HF Space Settings → Repository secrets 中配置
 
 ## 第三方依赖
 
