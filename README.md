@@ -201,7 +201,7 @@ CI 状态：最后一次执行为 **pass** ✅
 
 ### 公网访问地址
 
-**https://daily-6-coding-agent-harness.hf.space**
+**https://daily6-intelligent-software.hf.space**
 
 > 部署平台：Hugging Face Spaces（Docker SDK，免费）
 > 部署方式：将代码推送到 HF Space 的 git 仓库，自动构建 Docker 镜像并部署
