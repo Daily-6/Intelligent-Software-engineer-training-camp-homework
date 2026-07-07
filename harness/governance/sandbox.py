@@ -25,6 +25,10 @@ def _check_file(action: Action, project_root: str, readonly_paths: list) -> Sand
     path = action.args.get("path", "")
     if not path:
         return SandboxResult(allowed=True)
+    if not os.path.isabs(path):
+        path = os.path.join(project_root, path)
+    if path == "." or path == "./" or path == project_root:
+        path = project_root
     real_path = os.path.realpath(path)
     real_root = os.path.realpath(project_root)
     if not real_path.startswith(real_root):

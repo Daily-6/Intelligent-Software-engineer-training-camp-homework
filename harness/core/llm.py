@@ -33,19 +33,25 @@ class DeepSeekClient(LLMClient):
         return self._parse_action(content)
 
     def _parse_action(self, content: str) -> Action:
+        import re
         try:
-            start = content.find("{")
-            end = content.rfind("}") + 1
+            text = content.strip()
+            text = re.sub(r'```(?:json)?\s*', '', text)
+            text = text.strip('`').strip()
+            start = text.find("{")
+            end = text.rfind("}") + 1
             if start == -1 or end == 0:
-                return Action(tool_name="error", args={}, thought="no JSON found", result=None)
-            data = json.loads(content[start:end])
-            return Action(
-                tool_name=data.get("tool", "error"),
-                args=data.get("args", {}),
-                thought=data.get("thought", ""),
-            )
-        except (json.JSONDecodeError, KeyError) as e:
-            return Action(tool_name="error", args={}, thought=f"parse error: {e}")
+                return Action(tool_name="error", args={}, thought=f"no JSON found in: {content[:200]}")
+            json_str = text[start:end]
+            json_str = json_str.replace("'", '"')
+            json_str = re.sub(r'(\w+):', r'"\1":', json_str)
+            data = json.loads(json_str)
+            tool = data.get("tool") or data.get("tool_name") or data.get("action") or "error"
+            args = data.get("args") or data.get("arguments") or data.get("parameters") or {}
+            thought = data.get("thought") or data.get("reasoning") or data.get("reason") or ""
+            return Action(tool_name=tool, args=args, thought=thought)
+        except Exception as e:
+            return Action(tool_name="error", args={}, thought=f"parse error: {e}, raw: {content[:200]}")
 
 
 class MockLLMClient(LLMClient):

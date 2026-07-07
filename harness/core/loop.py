@@ -68,7 +68,17 @@ class AgentLoop:
 
     def _system_prompt(self) -> str:
         return (
-            "You are a coding agent. Output a JSON action with fields: tool, args, thought. "
-            "Available tools: read_file, write_file, list_dir, execute_shell, run_tests, finish. "
-            "Use 'finish' when the task is complete."
+            "You are a coding agent. For each step, output ONLY a JSON object, no other text.\n"
+            "Format: {\"tool\": \"<tool_name>\", \"args\": {<arguments>}, \"thought\": \"<reasoning>\"}\n"
+            "Available tools:\n"
+            '  read_file: args={"path": "<relative_path>"} - read a file\n'
+            '  write_file: args={"path": "<relative_path>", "content": "<file_content>"} - write a file\n'
+            '  list_dir: args={"path": "<relative_path_or_dot>"} - list directory contents\n'
+            '  execute_shell: args={"command": "<shell_command>"} - run a shell command\n'
+            '  run_tests: args={"test_args": "<pytest_args_or_empty>"} - run pytest\n'
+            '  finish: args={} - task is complete\n'
+            "Rules:\n"
+            "- All file paths must be relative (e.g. \"hello.py\", \"src/main.py\").\n"
+            "- Output ONLY the JSON object, no markdown, no explanation outside JSON.\n"
+            "- Example: {\"tool\": \"write_file\", \"args\": {\"path\": \"hello.py\", \"content\": \"print('hello')\"}, \"thought\": \"creating hello world\"}\n"
         )
