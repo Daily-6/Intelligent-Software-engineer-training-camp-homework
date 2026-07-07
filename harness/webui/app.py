@@ -8,7 +8,7 @@ import uuid
 import os
 
 from harness.core.loop import AgentLoop
-from harness.core.llm import MockLLMClient
+from harness.core.llm import MockLLMClient, DeepSeekClient
 from harness.core.action import Action
 from harness.tools.dispatcher import ToolDispatcher
 from harness.tools.file_tools import read_file, write_file, list_dir
@@ -33,12 +33,20 @@ _lock = threading.Lock()
 def _create_loop(config: Config) -> AgentLoop:
     root = config.project_root
     os.makedirs(root, exist_ok=True)
-    script = [Action(tool_name="finish", args={}, thought="done")]
-    llm = MockLLMClient(script)
+
+    api_key = os.environ.get("DEEPSEEK_API_KEY")
+    if api_key:
+        llm = DeepSeekClient(api_key=api_key, model=config.llm.model)
+    else:
+        script = [Action(tool_name="finish", args={}, thought="DEEPSEEK_API_KEY not set, finishing immediately")]
+        llm = MockLLMClient(script)
+
     dispatcher = ToolDispatcher()
     dispatcher.register("read_file", lambda args, ctx: read_file(args["path"], root))
     dispatcher.register("write_file", lambda args, ctx: write_file(args["path"], args["content"], root))
     dispatcher.register("list_dir", lambda args, ctx: list_dir(args["path"], root))
+    dispatcher.register("execute_shell", lambda args, ctx: __import__("harness.tools.shell_tool", fromlist=["execute_shell"]).execute_shell(args["command"], cwd=root))
+    dispatcher.register("run_tests", lambda args, ctx: __import__("harness.tools.test_tool", fromlist=["run_tests"]).run_tests(args.get("test_args", ""), cwd=root))
     dispatcher.register("finish", lambda args, ctx: type("R", (), {"success": True, "output": "finished", "error": ""})())
     rules = [
         Rule(pattern=r"rm\s+-rf\s+/", severity="deny", tool="execute_shell", description="rm -rf"),
