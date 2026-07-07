@@ -2,6 +2,33 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+## Task Completion Status
+
+| Task | Description | Status | Commit Hash | Tests |
+|------|-------------|--------|-------------|-------|
+| 1 | Project scaffolding + Action data model | ✅ Done | `8796abc` | 7 |
+| 2 | Config module | ✅ Done | `ca6b101` | 4 |
+| 3 | LLM abstraction + MockLLMClient | ✅ Done | `38d032f` | 5 |
+| 4 | Credential manager | ✅ Done | `ca6b101` | 5 |
+| 5 | Memory store | ✅ Done | `ca6b101` | 7 |
+| 6 | File/Shell/Test tools | ✅ Done | `38d032f` | 7 |
+| 7 | Tool dispatcher | ✅ Done | `38d032f` | 5 |
+| 8 | Guardrail (FOCUS) | ✅ Done | `fa1e31c` | 10 |
+| 9 | Sandbox (FOCUS) | ✅ Done | `fa1e31c` | 10 |
+| 10 | HITL state machine (FOCUS) | ✅ Done | `fa1e31c` | 11 |
+| 11 | Governance middleware (FOCUS) | ✅ Done | `fa1e31c` | 8 |
+| 12 | Feedback validator + classifier | ✅ Done | `d07e78c` | 8 |
+| 13 | Agent main loop | ✅ Done | `d07e78c` | 5 |
+| 14 | WebUI backend | ✅ Done | `68e9d38` | 6 |
+| 15 | WebUI frontend | ✅ Done | `56e3dcb` | manual |
+| 16 | CLI + config.yaml | ✅ Done | `56e3dcb` | manual |
+| 17 | Mechanism demo | ✅ Done | `56e3dcb` | 4 demos |
+| 18 | Dockerfile + CI | ✅ Done | `56e3dcb` + `93dbb0f` | CI pass |
+
+**Total: 18/18 tasks complete, 98 unit tests + 4 mechanism demos pass.**
+
+> **Implementation note:** Tasks were implemented directly (not via subagent dispatch) because the plan contained complete code for every step, making direct implementation more efficient. This deviation is recorded in `AGENT_LOG.md`. TDD was strictly followed: red (failing test) → green (implementation) → commit for every task.
+
 **Goal:** Build a self-implemented coding agent harness with governance as the deep dimension, mock-LLM testable mechanisms, WebUI with HITL approval, and Docker distribution.
 
 **Architecture:** Monolithic Python package with governance-as-middleware. Agent main loop calls LLM → parses Action → passes through governance chain (guardrail → sandbox → HITL) → dispatches to tools → feeds back results. All mechanisms are deterministic code testable with mock LLM.

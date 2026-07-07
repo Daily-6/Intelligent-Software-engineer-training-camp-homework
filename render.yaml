@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: coding-agent-harness
+    env: docker
+    repo: https://github.com/Daily-6/Intelligent-Software-engineer-training-camp-homework
+    branch: main
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: DEEPSEEK_API_KEY
+        sync: false
+    autoDeploy: true

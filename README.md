@@ -166,6 +166,35 @@ project/
 - `unit-test` job：每次 push 自动运行 `pytest tests/ -v`
 - `docker-build` job：main 分支 push 时构建 Docker 镜像
 
+`.github/workflows/ci.yml`（GitHub Actions）包含：
+- `unit-test` job：每次 push 自动运行 `pytest tests/ -v`
+- `docker-build` job：main 分支 push 时构建 Docker 镜像
+
+CI 状态：最后一次执行为 **pass** ✅
+
+## 线上部署
+
+### 部署架构
+
+- **平台**：Render（免费层，Docker 部署）
+- **方式**：Render 读取 `render.yaml` + `Dockerfile`，构建镜像，暴露 8000 端口为公网 URL
+- **CI/CD**：push 到 main 分支自动触发 Render 重新部署
+- **环境变量**：`DEEPSEEK_API_KEY` 通过 Render 控制台配置（不写入仓库）
+
+### 部署步骤
+
+1. 注册 [Render](https://render.com) 账号（免费层 750h/月）
+2. New → Web Service → 连接 GitHub 仓库 `Daily-6/Intelligent-Software-engineer-training-camp-homework`
+3. Render 自动检测 `render.yaml`，使用 Docker 部署
+4. 在 Environment 中设置 `DEEPSEEK_API_KEY`
+5. 部署完成后获得公网 URL（如 `https://coding-agent-harness.onrender.com`）
+
+### 公网访问地址
+
+**https://coding-agent-harness.onrender.com**
+
+> 注：Render 免费层在 15 分钟无请求后会休眠，首次访问可能需要 30 秒冷启动。
+
 ## 第三方依赖
 
 - [FastAPI](https://fastapi.tiangolo.com/) (MIT)

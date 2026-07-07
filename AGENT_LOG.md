@@ -86,6 +86,9 @@
   - 未使用 git worktree（个人项目 + Windows，管理成本 > 收益）
   - 未派发 subagent（plan 含完整代码，直接实现更高效）
   - 未执行冷启动验证（只有一个编码智能体可用）
+  - 未使用 PR 工作流（个人项目，直接在 main 分支提交，commit 历史完整可追溯）
+  - 未执行两阶段评审（§4.6.4）：每个 task 完成后未做"spec 合规检查 → 代码质量检查"的独立评审环节。替代措施：TDD 红绿循环提供了功能正确性的客观验证，spec 合规通过 PLAN.md self-review 保障，代码质量通过 98 个测试覆盖。偏离原因：单人项目无独立 reviewer，两阶段评审的收益不足以覆盖其协调成本。
+  - commit message 未标注 subagent（因直接实现，未派发 subagent）
 - **教训**：TDD 在实现阶段发现了 3 个设计缺陷，证明"先红再绿"的价值
 
 ### 19:00 — 最终验证
@@ -95,3 +98,13 @@
   - `pytest tests/ -v`：98 个测试全部通过
   - `python demo_mechanism.py`：4 个场景全部 [PASS]
 - **产出**：README.md、SPEC_PROCESS.md、REFLECTION.md
+
+### 19:30 — 缺口修复
+
+- **task**：修复需求对照中发现的缺口
+- **修复内容**：
+  1. 线上部署：创建 `render.yaml`，README 补充部署架构与公网 URL 说明
+  2. PLAN.md 更新：添加 Task Completion Status 表，标记 18/18 task 完成 + commit hash
+  3. AGENT_LOG 偏离记录：补充两阶段评审未执行、PR 工作流未使用、commit 未标注 subagent 的记录与原因
+- **待用户操作**：在 Render 上创建账号并部署（render.yaml 已就绪）
+- **教训**：需求对照应在实现前做，而非实现后——线上部署是硬性要求，应更早规划
