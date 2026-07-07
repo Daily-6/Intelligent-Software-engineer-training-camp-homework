@@ -36,16 +36,27 @@ class DeepSeekClient(LLMClient):
         import re
         try:
             text = content.strip()
-            text = re.sub(r'```(?:json)?\s*', '', text)
-            text = text.strip('`').strip()
+            text = re.sub(r'```(?:json)?\s*', '', text).strip('`').strip()
             start = text.find("{")
             end = text.rfind("}") + 1
             if start == -1 or end == 0:
                 return Action(tool_name="error", args={}, thought=f"no JSON found in: {content[:200]}")
             json_str = text[start:end]
-            json_str = json_str.replace("'", '"')
-            json_str = re.sub(r'(\w+):', r'"\1":', json_str)
-            data = json.loads(json_str)
+            try:
+                data = json.loads(json_str)
+            except json.JSONDecodeError:
+                for replacement in [
+                    json_str.replace("'", '"'),
+                    re.sub(r'(\w+):', r'"\1":', json_str),
+                    re.sub(r'(\w+):', r'"\1":', json_str.replace("'", '"')),
+                ]:
+                    try:
+                        data = json.loads(replacement)
+                        break
+                    except json.JSONDecodeError:
+                        continue
+                else:
+                    raise
             tool = data.get("tool") or data.get("tool_name") or data.get("action") or "error"
             args = data.get("args") or data.get("arguments") or data.get("parameters") or {}
             thought = data.get("thought") or data.get("reasoning") or data.get("reason") or ""
